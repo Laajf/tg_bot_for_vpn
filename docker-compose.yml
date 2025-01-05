@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python app.py  # Запуск приложения с использованием pip
+    ports:
+      - "8000:8000"  # Если твое приложение слушает на порту 8000, можно изменить
+    restart: always  # Перезапускать контейнер, если он выходит из строя
