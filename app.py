@@ -1,9 +1,8 @@
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import LabeledPrice, PreCheckoutQuery ,InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import LabeledPrice, PreCheckoutQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types.input_file import FSInputFile
 import asyncio
 from utils.create_and_get_config import create_and_get_config
-from aiogram.types.input_file import FSInputFile
-from aiogram import types
 from aiogram.filters import Command
 from aiogram import Router
 
@@ -14,75 +13,57 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 router = Router()
 
+def get_main_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Купить VPN на 1 месяц", callback_data="buy_1")],
+        [InlineKeyboardButton(text="Купить VPN на 2 месяца", callback_data="buy_2")],
+        [InlineKeyboardButton(text="Купить VPN на 3 месяца", callback_data="buy_3")],
+        [InlineKeyboardButton(text="Помощь", callback_data="help")]
+    ])
+
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
-    print(1111)
-    await message.answer("Привет! Я бот для покупки red_panda_vpn.Используй /help чтобы узнать больше о боте.")
-    print("11111")
+    await message.answer(
+        "\U0001F60E Привет! Я бот для покупки VPN. Выберите опцию из меню ниже.",
+        reply_markup=get_main_keyboard()
+    )
 
+@dp.callback_query()
+async def handle_callback(query: types.CallbackQuery):
+    if query.data == "help":
+        await query.message.edit_text(
+            "\U0001F4AC **Информация:**\n\n"
+            "1. **Безопасность платежей:** Платежи через Telegram безопасны. Мы не получаем ваших данных о карте, все операции проходят через зашифрованное соединение Telegram.\n\n"
+            "2. **Что такое VPN:** VPN (Virtual Private Network) — это технология, которая защищает ваши данные в интернете и обходит ограничения на доступ к сайтам. "
+            "Наша технология обеспечивает стабильное соединение и максимальную конфиденциальность.\n\n"
+            "3. **Как установить VPN?**\n"
+            "   - Инструкции для iOS, macOS, Windows, Linux и Android можно найти в [руководстве по настройке IKEv2 VPN](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/ikev2-howto.md#os-x-macos).\n\n"
+            "4. **Часто задаваемые вопросы:**\n"
+            "   - **Как я получу доступ к VPN?** После оплаты вы получите конфигурационный файл.\n"
+            "   - **Подходит ли VPN для мобильных устройств?** Да, вы можете использовать его на телефоне, планшете и компьютере.",
+            reply_markup=get_main_keyboard()
+        )
 
-@dp.message(Command("help"))
-async def help(message: types.Message):
-    await message.answer("""Список команд бота:
-    1./buy_1 - купить впн на 1 месяц
-    2./buy_2 - купить впн на 2 месяца
-    3./buy_3 - купить впн на 3 месяца
-    """)
+    elif query.data.startswith("buy_"):
+        duration = query.data.split("_")[1]
+        await process_purchase(query.message, int(duration))
 
-@dp.message(Command("buy_1"))
-async def buy_process(message: types.Message):
+async def process_purchase(message: types.Message, duration: int):
+    amounts = {1: 5000, 2: 10000, 3: 15000}
+    prices = [LabeledPrice(label=f"VPN на {duration} месяц(а)", amount=amounts[duration])]
     try:
-
-        prices = [LabeledPrice(label="Товар", amount=5000)]
         await bot.send_invoice(
             chat_id=message.chat.id,
-            title="Впн",
-            description="Псоле оплаты вам будет выдан конфиг впн",
+            title=f"VPN на {duration} месяц(а)",
+            description="После оплаты вы получите конфигурацию для VPN.",
             provider_token=PAYMENT_PROVIDER_TOKEN,
             currency="RUB",
             prices=prices,
             start_parameter="unique_start_parameter",
-            payload="vpn_1_month"
+            payload=f"vpn_{duration}_month"
         )
     except Exception as e:
-        await message.answer(f"Произошла ошибка при создании счета: {str(e)}")
-
-@dp.message(Command("buy_2"))
-async def buy_process(message: types.Message):
-    try:
-
-        prices = [LabeledPrice(label="Товар", amount=10000)]
-        await bot.send_invoice(
-            chat_id=message.chat.id,
-            title="Тестовый товар",
-            description="Описание тестового товара",
-            provider_token=PAYMENT_PROVIDER_TOKEN,
-            currency="RUB",
-            prices=prices,
-            start_parameter="unique_start_parameter",
-            payload="vpn_2_month"
-        )
-    except Exception as e:
-        await message.answer(f"Произошла ошибка при создании счета: {str(e)}")
-
-@dp.message(Command("buy_3"))
-async def buy_process(message: types.Message):
-    try:
-
-        prices = [LabeledPrice(label="Товар", amount=15000)]
-        await bot.send_invoice(
-            chat_id=message.chat.id,
-            title="Тестовый товар",
-            description="Описание тестового товара",
-            provider_token=PAYMENT_PROVIDER_TOKEN,
-            currency="RUB",
-            prices=prices,
-            start_parameter="unique_start_parameter",
-            payload="vpn_3_month"
-        )
-    except Exception as e:
-        await message.answer(f"Произошла ошибка при создании счета: {str(e)}")
-
+        await message.answer(f"\u26A0 Ошибка при создании счета: {str(e)}")
 
 @dp.pre_checkout_query()
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
@@ -91,116 +72,17 @@ async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
     except Exception as e:
         print(f"Ошибка при обработке предварительного запроса: {str(e)}")
 
-
-@dp.message(lambda message: message.content_type == types.ContentType.SUCCESSFUL_PAYMENT)
+@dp.message(lambda message: message.successful_payment)
 async def process_successful_payment(message: types.Message):
     payload = message.successful_payment.invoice_payload
-    await message.answer(payload)
-    if payload == "vpn_1_month":
-        await message.answer("Спасибо за покупку! Сейчас вам будет выдан конфиг  VPN на 1 месяц.")
+    duration = payload.split("_")[1]
+    await message.answer(f"\U0001F389 Спасибо за покупку VPN на {duration} месяц(а)!\n\U0001F4BE Ваш файл сейчас будет отправлен.")
 
-        msg = await message.answer("Процесс выдачи конфига VPN начинается.")
+    config_file_path = create_and_get_config(int(duration)) + ".sswan"
+    config_file = FSInputFile(config_file_path)
+    await bot.send_document(message.chat.id, config_file)
 
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. ")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. . .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. ")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. . .")
-
-
-        config_file_path = create_and_get_config(
-            1) + ".sswan"
-        config_file = FSInputFile(config_file_path)
-        await bot.send_document(message.chat.id, config_file)
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс завершен.")
-
-
-
-
-
-
-    elif payload == "vpn_2_month":
-        await message.answer("Спасибо за покупку! Сейчас вам будет выдан конфиг  VPN на 2 месяца.")
-
-        msg = await message.answer("Процесс выдачи конфига VPN начинается.")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. ")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. . .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. ")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. . .")
-
-
-        config_file_path = create_and_get_config(
-            2) + ".sswan"
-        config_file = FSInputFile(config_file_path)
-        await bot.send_document(message.chat.id, config_file)
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс завершен.")
-
-    elif payload == "vpn_3_month":
-        await message.answer("Спасибо за покупку! Сейчас вам будет выдан конфиг  VPN на 3 месяца.")
-
-        msg = await message.answer("Процесс выдачи конфига VPN начинается.")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. ")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. . .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. ")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. .")
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс идет. . .")
-
-
-        config_file_path = create_and_get_config(
-        3) + ".sswan"
-        config_file = FSInputFile(config_file_path)
-        await bot.send_document(message.chat.id, config_file)
-
-        await asyncio.sleep(1)
-        await msg.edit_text("Процесс завершен.")
-
-    else:
-        await message.answer("Спасибо за покупку!")
-
+    await message.answer("\U0001F512 Конфигурация отправлена! Приятного пользования.")
 
 async def main():
     try:
