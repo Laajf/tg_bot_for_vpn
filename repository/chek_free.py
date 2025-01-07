@@ -33,5 +33,5 @@ def add_record(json_file, user_id, date=None):
         json.dump(data, file, indent=4)
 
     print(f"Запись добавлена: {{'user_id': {user_id}, 'date': {date}}}")
-if __name__ == "__main__":
-    print(examination(1234))
+
+
