@@ -17,7 +17,8 @@ def examination(user_id):
     return False
 
 
-def add_record(json_file, user_id, date=None):
+def add_record(user_id, date=None):
+    json_file = "data.json"
     try:
         with open(json_file, 'r') as file:
             data = json.load(file)
