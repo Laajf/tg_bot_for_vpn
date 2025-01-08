@@ -5,6 +5,7 @@ import asyncio
 from utils.create_and_get_config import create_and_get_config
 from aiogram.filters import Command
 from aiogram import Router
+from repository.chek_free import examination, add_record
 
 BOT_TOKEN = "7706530077:AAHbhHTE9VvPZaTAnTDRRrDj1EFTx6JnMog"
 PAYMENT_PROVIDER_TOKEN = "1744374395:TEST:ff512475568d60d16e73"
@@ -18,6 +19,7 @@ def get_main_keyboard():
         [InlineKeyboardButton(text="Купить VPN на 1 месяц", callback_data="buy_1")],
         [InlineKeyboardButton(text="Купить VPN на 2 месяца", callback_data="buy_2")],
         [InlineKeyboardButton(text="Купить VPN на 3 месяца", callback_data="buy_3")],
+        [InlineKeyboardButton(text="Получить бесплатный VPN", callback_data="free_vpn")],
         [InlineKeyboardButton(text="Помощь", callback_data="help")]
     ])
 
@@ -47,6 +49,13 @@ async def handle_callback(query: types.CallbackQuery):
     elif query.data.startswith("buy_"):
         duration = query.data.split("_")[1]
         await process_purchase(query.message, int(duration))
+    elif query.data == "free_vpn":
+        if examination(query.from_user.id):
+            await query.message.answer("Вы уже использовали бесплатный впн")
+        else:
+            add_record(query.from_user.id)
+            await query.message.answer("Вы еще не использовали бесплатный впн")
+
 
 async def process_purchase(message: types.Message, duration: int):
     amounts = {1: 5000, 2: 10000, 3: 15000}
