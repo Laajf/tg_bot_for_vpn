@@ -16,6 +16,7 @@ services:
   time_action:
     build:
       context: ./time_sleep_action
+      dockerfile: Dockerfile
     ports:
       - "8001:8000"
     volumes:

@@ -1,12 +1,10 @@
-FROM python:3.9-slim
+FROM python:3.9
+
 WORKDIR /time_sleep_action
 
-# Установка зависимостей
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Копирование файлов проекта
 COPY . .
 
-# Запуск приложения
-CMD ["python", "tasks.py"]
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
