@@ -3,3 +3,5 @@ asyncio==3.4.3
 subprocess.run==0.0.8
 scp==0.15.0
 aiofiles==24.1.0
+requests
+yoomoney
