@@ -13,11 +13,3 @@ services:
       - "8000:8000"  # Если твое приложение слушает на порту 8000, можно изменить
     restart: always  # Перезапускать контейнер, если он выходит из строя
 
-  time_action:
-    build:
-      context: ./time_sleep_action
-      dockerfile: Dockerfile
-    ports:
-      - "8001:8000"
-    volumes:
-      - ./time_sleep_action:/time_sleep_action
